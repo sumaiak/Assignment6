@@ -10,16 +10,15 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import io.javalin.http.Handler;
 import io.javalin.http.HttpStatus;
-import io.javalin.validation.ValidationException;
+
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import jakarta.persistence.EntityExistsException;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.EntityNotFoundException;
-import lyngby.dk.Secuirty.token.TokenDTO;
+
 import lyngby.dk.HotelExercise.DTOS.UserDTO;
 import lyngby.dk.HotelExercise.HibernateConfig.HibernateConfig;
 import lyngby.dk.Secuirty.Dao.UserDAO;
@@ -87,48 +86,8 @@ public class SecurityController {
     }
 
 
-    public Handler login() {
-        return (ctx) -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            ObjectNode returnObject = objectMapper.createObjectNode();
-            try {
-                UserDTO user = ctx.bodyAsClass(UserDTO.class);
-                User verifiedUserEntity = userDAO.getVerifiedUser(user.getUsername(), user.getPassword());
-                String token = createToken(new UserDTO(verifiedUserEntity));
-                ctx.status(200).json(new TokenDTO(token, user.getUsername()));
 
-            } catch (EntityNotFoundException | ValidationException e) {
-                ctx.status(401);
-                System.out.println(e.getMessage());
-                ctx.json(returnObject.put("msg", e.getMessage()));
-            }
-        };
-    }
 
-    public String createToken(UserDTO user) throws JOSEException {
-        try {
-            String ISSUER;
-            String TOKEN_EXPIRE_TIME;
-
-            if (System.getenv("DEPLOYED") != null) {
-                ISSUER = System.getenv("ISSUER");
-                TOKEN_EXPIRE_TIME = System.getenv("TOKEN_EXPIRE_TIME");
-                SECRET_KEY = System.getenv("SECRET_KEY");
-            } else {
-                ISSUER = "sumaia kalache ";
-                TOKEN_EXPIRE_TIME = "1800000";
-            }
-
-            if (SECRET_KEY == null) {
-                throw new IllegalStateException("Secret key is null");
-            }
-
-            return createToken(user, ISSUER, TOKEN_EXPIRE_TIME, SECRET_KEY);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new JOSEException("Could not create token");
-        }
-    }
 
     public String createToken(UserDTO user, String ISSUER, String TOKEN_EXPIRE_TIME, String SECRET_KEY) throws
             JOSEException {
@@ -166,19 +125,4 @@ public class SecurityController {
     }
 
 
-    public Handler register() {
-        return (ctx) -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            ObjectNode returnObject = objectMapper.createObjectNode();
-            try {
-                UserDTO userInput = ctx.bodyAsClass(UserDTO.class);
-                User created = userDAO.createUser(userInput.getUsername(), userInput.getPassword());
-                String token = createToken(new UserDTO(created));
-                ctx.status(HttpStatus.CREATED).json(new TokenDTO(token, userInput.getUsername()));
-            } catch (EntityExistsException e) {
-                ctx.status(HttpStatus.UNPROCESSABLE_CONTENT);
-                ctx.json(returnObject.put("msg", "User already exists"));
-            }
-        };
-    }
 }

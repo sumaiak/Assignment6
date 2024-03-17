@@ -1,13 +1,11 @@
 package lyngby.dk.Secuirty.token;
 
 import com.nimbusds.jose.*;
-import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jose.crypto.MACVerifier;
+
 import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
 import lyngby.dk.HotelExercise.DTOS.UserDTO;
 
-import java.text.ParseException;
+
 import java.util.Date;
 
 public class VerifyToken {
@@ -21,11 +19,7 @@ public class VerifyToken {
             this.SECRET_KEY = SECRET_KEY;
         }
 
-        public String signToken(String userName, String rolesAsString, Date date) throws JOSEException {
-            JWTClaimsSet claims = createClaims(userName, rolesAsString, date);
-            JWSObject jwsObject = createHeaderAndPayload(claims);
-            return signTokenWithSecretKey(jwsObject);
-        }
+
 
         private JWTClaimsSet createClaims(String username, String rolesAsString, Date date) {
             return new JWTClaimsSet.Builder()
@@ -41,25 +35,6 @@ public class VerifyToken {
             return new JWSObject(new JWSHeader(JWSAlgorithm.HS256), new Payload(claimsSet.toJSONObject()));
         }
 
-        private String signTokenWithSecretKey(JWSObject jwsObject) {
-            try {
-                JWSSigner signer = new MACSigner(SECRET_KEY.getBytes());
-                jwsObject.sign(signer);
-                return jwsObject.serialize();
-            } catch (JOSEException e) {
-                throw new RuntimeException("Signing failed", e);
-            }
-        }
-
-        public SignedJWT parseTokenAndVerify(String token) throws ParseException, JOSEException {
-            SignedJWT signedJWT = SignedJWT.parse(token);
-            JWSVerifier verifier = new MACVerifier(SECRET_KEY.getBytes());
-
-            if (!signedJWT.verify(verifier)) {
-                throw  new RuntimeException();
-            }
-            return signedJWT;
-        }
 
         public UserDTO getJWTClaimsSet(JWTClaimsSet claimsSet)  {
 

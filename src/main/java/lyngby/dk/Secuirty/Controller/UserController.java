@@ -21,8 +21,7 @@ public class UserController {
                     UserDTO dto = ctx.bodyAsClass(UserDTO.class);
                     System.out.println("USER in Login" + dto);
 
-                    User verifiedUserEntity = dao.getVerifiedUser(dto.getUsername(), dto.getPassword());
-                    System.out.println(verifiedUserEntity);
+                    User verifyUser = dao.getVerifiedUser(dto.getUsername(), dto.getPassword());
 
                     ctx.status(200).json(dto.getUsername());
                 } catch (EntityNotFoundException e) {
